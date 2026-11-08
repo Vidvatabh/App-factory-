@@ -218,10 +218,19 @@ function addFile(){
     return;
   }
 
-  files[clean]="";
+  const filePath=currentFolder
+  ? currentFolder+"/"+clean
+  : clean;
+
+if(files[filePath]!==undefined){
+  alert("File already exists.");
+  return;
+}
+
+files[filePath]="";
   storeFiles();
   renderFiles();
-  selectFile(clean);
+  selectFile(filePath);
   setStatus("New file created");
 }
 
@@ -231,12 +240,21 @@ function addFolder(){
 
   const clean=name.trim();
 
-  if(!clean || clean.includes("/") || clean.includes("\\") || files[clean+"/.folder"]!==undefined){
+  if(!clean || clean.includes("/") || clean.includes("\\")){
     alert("Invalid or existing folder name.");
     return;
   }
 
-  files[clean+"/.folder"]="";
+  const folderPath=currentFolder
+  ? currentFolder+"/"+clean
+  : clean;
+
+if(files[folderPath+"/.folder"]!==undefined){
+  alert("Folder already exists.");
+  return;
+}
+
+files[folderPath+"/.folder"]="";
   storeFiles();
   renderFiles();
   setStatus("Folder created");
@@ -268,22 +286,37 @@ function saveFile(){
 }
 function renameFile(){
   if(!selectedFile)return;
-  const name=prompt("New file name",selectedFile);
+
+  const oldName=selectedFile.split("/").pop();
+  const name=prompt("New file name",oldName);
   if(!name)return;
+
   const clean=name.trim();
 
-  if(!clean || clean.includes("/") || clean.includes("\\") ||
-     (clean!==selectedFile && files[clean]!==undefined)){
-    alert("Invalid or existing file name.");
+  if(!clean || clean.includes("/") || clean.includes("\\")){
+    alert("Invalid file name.");
     return;
   }
 
-  files[clean]=document.getElementById("editor").value;
+  const folder=selectedFile.includes("/")
+    ? selectedFile.substring(0,selectedFile.lastIndexOf("/")+1)
+    : "";
+
+  const newPath=folder+clean;
+
+  if(newPath!==selectedFile && files[newPath]!==undefined){
+    alert("File already exists.");
+    return;
+  }
+
+  files[newPath]=document.getElementById("editor").value;
   delete files[selectedFile];
-  selectedFile=clean;
+
+  selectedFile=newPath;
   storeFiles();
   renderFiles();
-  selectFile(clean);
+  selectFile(newPath);
+
   setStatus("File renamed");
 }
 
