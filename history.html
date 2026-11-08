@@ -7,25 +7,30 @@
 <title>Version History | App Factory</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#10131b;color:#f3f4f8;font-family:Arial}
-header{padding:18px;background:#191e29;color:#d9a85b;font-weight:bold}
+body{margin:0;background:#10131b;color:#f3f4f8;font-family:Arial,sans-serif}
+header{padding:18px;background:#191e29;color:#d9a85b;font-weight:bold;border-bottom:1px solid #303746}
 main{padding:20px;max-width:850px;margin:auto}
-.panel{background:#191e29;border:1px solid #303746;border-radius:10px;padding:16px;margin-top:16px}
-button{padding:10px 14px;border:0;border-radius:7px;background:#c18d43;font-weight:bold}
+button{padding:10px 14px;border:0;border-radius:7px;background:#c18d43;color:#171717;font-weight:bold;cursor:pointer}
 .secondary{background:#303746;color:white}
+.panel{background:#191e29;border:1px solid #303746;border-radius:10px;padding:16px;margin-top:16px}
 .muted{color:#929bad;font-size:13px}
 .item{padding:14px;border-bottom:1px solid #303746}
-pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#10131b;padding:12px;border-radius:7px;max-height:250px;overflow:auto}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#10131b;padding:12px;border-radius:7px;max-height:250px;overflow:auto;color:#e8e8e8}
 </style>
 </head>
 <body>
+
 <header>⚙ APP FACTORY / VERSION HISTORY</header>
+
 <main>
 <button class="secondary" onclick="goBack()">← Workspace</button>
+
 <h2 id="title">Version History</h2>
 <div class="muted">Previously saved versions of this file</div>
+
 <div id="list"></div>
 </main>
+
 <script>
 const params=new URLSearchParams(location.search);
 const projectId=params.get("id");
@@ -36,9 +41,21 @@ function goBack(){
  location.href="project.html?id="+encodeURIComponent(projectId);
 }
 
+function escapeHTML(value){
+ return String(value).replace(/[&<>"']/g,c=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",
+  '"':"&quot;","'":"&#39;"
+ })[c]);
+}
+
 function render(){
  document.getElementById("title").textContent=file||"Version History";
- const history=JSON.parse(localStorage.getItem("app_factory_history")||"{}");
+
+ let history={};
+ try{
+  history=JSON.parse(localStorage.getItem("app_factory_history")||"{}");
+ }catch(e){}
+
  const versions=history[key]||[];
  const list=document.getElementById("list");
 
@@ -49,7 +66,7 @@ function render(){
 
  list.innerHTML=versions.map((v,i)=>`
   <div class="panel">
-   <div><strong>Version ${versions.length-i}</strong></div>
+   <strong>Version ${versions.length-i}</strong>
    <div class="muted">${escapeHTML(v.date)}</div>
    <pre>${escapeHTML(v.content)}</pre>
    <button onclick="restoreVersion(${i})">Restore this version</button>
@@ -57,30 +74,37 @@ function render(){
  `).join("");
 }
 
-function escapeHTML(value){
- return String(value).replace(/[&<>"']/g,c=>({
-  "&":"&amp;","<":"&lt;",">":"&gt;",
-  '"':"&quot;","'":"&#39;"
- })[c]);
-}
-
 function restoreVersion(index){
  if(!confirm("Restore this version? Current content will be saved in history first."))return;
 
- const history=JSON.parse(localStorage.getItem("app_factory_history")||"{}");
+ let history={};
+ let all={};
+
+ try{
+  history=JSON.parse(localStorage.getItem("app_factory_history")||"{}");
+  all=JSON.parse(localStorage.getItem("app_factory_files")||"{}");
+ }catch(e){
+  alert("Could not read saved data.");
+  return;
+ }
+
  const versions=history[key]||[];
- const all=JSON.parse(localStorage.getItem("app_factory_files")||"{}");
  const files=all[projectId]||{};
  const current=files[file];
 
+ if(!versions[index])return;
+
  if(current!==undefined){
-  versions.unshift({content:current,date:new Date().toLocaleString()+" (before restore)"});
+  versions.unshift({
+   content:current,
+   date:new Date().toLocaleString()+" (before restore)"
+  });
  }
 
  files[file]=versions[index].content;
  all[projectId]=files;
-
  history[key]=versions;
+
  localStorage.setItem("app_factory_history",JSON.stringify(history));
  localStorage.setItem("app_factory_files",JSON.stringify(all));
 
@@ -88,7 +112,13 @@ function restoreVersion(index){
  goBack();
 }
 
-render();
+if(!projectId||!file){
+ document.getElementById("list").innerHTML=
+ '<div class="panel">Project or file information is missing.</div>';
+}else{
+ render();
+}
 </script>
+
 </body>
 </html>
