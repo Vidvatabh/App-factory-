@@ -85,7 +85,7 @@ const projectId=Number(params.get("id"));
 let project=null;
 let files={};
 let selectedFile=null;
-
+let currentFolder = "";
 function getProjects(){
   try{return JSON.parse(localStorage.getItem(PROJECTS_KEY))||[]}
   catch(e){return []}
@@ -138,22 +138,6 @@ function init(){
   renderFiles();
 }
 
-function renderFiles(){
-  const list=document.getElementById("fileList");
-  list.innerHTML="";
-
-  Object.keys(files).sort().forEach(name=>{
-    const item=document.createElement("div");
-    item.className="file"+(name===selectedFile?" active":"");
-    item.textContent="📄 "+name;
-    item.onclick=()=>selectFile(name);
-    list.appendChild(item);
-  });
-
-  if(!selectedFile && Object.keys(files).length){
-    selectFile(Object.keys(files)[0]);
-  }
-}
 
 function selectFile(name){
   if(selectedFile && files[selectedFile]!==undefined){
@@ -170,15 +154,30 @@ function selectFile(name){
 function renderFiles(){
   const list=document.getElementById("fileList");
   list.innerHTML="";
-
+if(currentFolder){
+  const back=document.createElement("div");
+  back.className="file";
+  back.textContent="⬅ Back";
+  back.onclick=()=>{
+    currentFolder="";
+    renderFiles();
+  };
+  list.appendChild(back);
+}
   Object.keys(files).sort().forEach(name=>{
     if(name.endsWith("/.folder")){
       const folder=name.replace("/.folder","");
       const item=document.createElement("div");
       item.className="file";
       item.textContent="📁 "+folder;
-      list.appendChild(item);
-      return;
+
+item.onclick=()=>{
+  currentFolder=folder;
+  renderFiles();
+};
+
+list.appendChild(item);
+return;
     }
 
     const item=document.createElement("div");
@@ -207,8 +206,6 @@ function addFile(){
   storeFiles();
   renderFiles();
   selectFile(clean);
-  setStatus("New file created");
-}
   setStatus("New file created");
 }
 
