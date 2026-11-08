@@ -182,9 +182,13 @@ Object.keys(files).sort().forEach(name=>{
     item.textContent="📁 "+folderName;
 
     item.onclick=()=>{
-      currentFolder=folder;
-      renderFiles();
-    };
+  currentFolder=folder;
+  selectedFile=null;
+  document.getElementById("fileTitle").textContent="Select a file";
+  document.getElementById("editor").value="";
+  renderFiles();
+  setStatus("Folder opened");
+};
 
     list.appendChild(item);
     return;
