@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>App Factory</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#10131b;color:#f3f4f8;font-family:Arial,sans-serif}
+header{padding:20px 6%;background:#191e29;border-bottom:1px solid #303746}
+.brand{font-size:23px;font-weight:800;color:#d9a85b}
+main{padding:28px 6%;max-width:1100px;margin:auto}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+h1{font-size:26px;margin:0 0 8px}
+.muted{color:#929bad;font-size:14px}
+button{border:0;border-radius:8px;padding:12px 17px;background:#c18d43;color:#171717;font-weight:bold}
+input{background:#191e29;border:1px solid #394253;border-radius:8px;padding:13px;color:white;width:100%;margin:12px 0}
+#projects{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;margin-top:22px}
+.card{background:#191e29;border:1px solid #303746;border-radius:12px;padding:18px}
+.card h3{margin:0 0 9px}
+.card button{margin-top:15px}
+.empty{padding:35px;text-align:center;border:1px dashed #394253;border-radius:12px;color:#929bad;grid-column:1/-1}
+.modal{display:none;position:fixed;inset:0;background:#000b;align-items:center;justify-content:center;padding:20px}
+.dialog{background:#191e29;padding:22px;border-radius:12px;width:100%;max-width:380px}
+.dialog h2{margin-top:0}
+.secondary{background:#303746;color:white;margin-left:8px}
+footer{padding:25px 6%;color:#778093;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">⚙ APP FACTORY</div>
+  <div class="muted">Your app development workspace</div>
+</header>
+
+<main>
+  <div class="top">
+    <div>
+      <h1>My Projects</h1>
+      <div class="muted">Create and manage your applications.</div>
+    </div>
+    <button onclick="showModal()">+ New Project</button>
+  </div>
+
+  <input id="search" placeholder="Search projects..." oninput="render()">
+  <div id="projects"></div>
+</main>
+
+<div class="modal" id="modal">
+  <div class="dialog">
+    <h2>New Project</h2>
+    <input id="projectName" placeholder="Project name">
+    <input id="projectDesc" placeholder="Short description">
+    <button onclick="createProject()">Create Project</button>
+    <button class="secondary" onclick="hideModal()">Cancel</button>
+  </div>
+</div>
+
+<footer>APP FACTORY · DEVELOPMENT WORKSPACE · VERSION 0.1</footer>
+
+<script>
+const KEY = "app_factory_projects";
+
+function getProjects(){
+  try{return JSON.parse(localStorage.getItem(KEY)) || []}
+  catch(e){return []}
+}
+
+function saveProjects(data){
+  localStorage.setItem(KEY,JSON.stringify(data));
+}
+
+function showModal(){
+  document.getElementById("modal").style.display="flex";
+  document.getElementById("projectName").focus();
+}
+
+function hideModal(){
+  document.getElementById("modal").style.display="none";
+}
+
+function createProject(){
+  const name=document.getElementById("projectName").value.trim();
+  const desc=document.getElementById("projectDesc").value.trim();
+
+  if(!name){alert("Enter a project name");return;}
+
+  const projects=getProjects();
+  projects.unshift({
+    id:Date.now(),
+    name:name,
+    description:desc,
+    created:new Date().toLocaleDateString()
+  });
+
+  saveProjects(projects);
+  document.getElementById("projectName").value="";
+  document.getElementById("projectDesc").value="";
+  hideModal();
+  render();
+}
+
+function deleteProject(id){
+  if(!confirm("Delete this project?"))return;
+  saveProjects(getProjects().filter(p=>p.id!==id));
+  render();
+}
+
+function render(){
+  const query=document.getElementById("search").value.toLowerCase();
+  const projects=getProjects().filter(p=>
+    p.name.toLowerCase().includes(query)
+  );
+
+  const container=document.getElementById("projects");
+
+  if(!projects.length){
+    container.innerHTML='<div class="empty">No projects found.<br>Create your first project.</div>';
+    return;
+  }
+
+  container.innerHTML=projects.map(p=>`
+    <div class="card">
+      <h3>${escapeHTML(p.name)}</h3>
+      <div class="muted">${escapeHTML(p.description || "No description")}</div>
+      <div class="muted">Created: ${escapeHTML(p.created)}</div>
+      <button onclick="openProject(${p.id})">Open Project</button>
+      <button class="secondary" onclick="deleteProject(${p.id})">Delete</button>
+    </div>
+  `).join("");
+}
+
+function escapeHTML(value){
+  return String(value).replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",
+    '"':"&quot;","'":"&#39;"
+  })[c]);
+}
+
+function openProject(id){
+  const p=getProjects().find(x=>x.id===id);
+  if(p)alert("Project: "+p.name+"\n\nProject workspace is our next development step.");
+}
+
+render();
+</script>
+</body>
+</html>
