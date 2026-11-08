@@ -184,11 +184,29 @@ function addFile(){
 
 function saveFile(){
   if(!selectedFile)return;
-  files[selectedFile]=document.getElementById("editor").value;
+
+  const content=document.getElementById("editor").value;
+  const all=getAllFiles();
+  const oldContent=(all[projectId]||{})[selectedFile];
+
+  if(oldContent!==undefined && oldContent!==content){
+    const history=JSON.parse(localStorage.getItem("app_factory_history")||"{}");
+    const key=projectId+"_"+selectedFile;
+
+    if(!history[key])history[key]=[];
+
+    history[key].unshift({
+      content:oldContent,
+      date:new Date().toLocaleString()
+    });
+
+    localStorage.setItem("app_factory_history",JSON.stringify(history));
+  }
+
+  files[selectedFile]=content;
   storeFiles();
   setStatus("Saved successfully");
 }
-
 function renameFile(){
   if(!selectedFile)return;
   const name=prompt("New file name",selectedFile);
