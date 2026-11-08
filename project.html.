@@ -50,8 +50,9 @@ input,textarea{background:#191e29;color:white;border:1px solid #394253;border-ra
       <h3>PROJECT FILES</h3>
       <div id="fileList"></div>
       <div class="actions">
-        <button onclick="addFile()">+ New File</button>
-      </div>
+  <button onclick="addFile()">+ New File</button>
+  <button class="secondary" onclick="addFolder()">+ New Folder</button>
+</div>
     </section>
 
     <section class="panel">
@@ -188,7 +189,25 @@ function addFile(){
   selectFile(clean);
   setStatus("New file created");
 }
+  setStatus("New file created");
+}
 
+function addFolder(){
+  const name=prompt("Enter folder name");
+  if(!name)return;
+
+  const clean=name.trim();
+
+  if(!clean || clean.includes("/") || clean.includes("\\") || files[clean+"/.folder"]!==undefined){
+    alert("Invalid or existing folder name.");
+    return;
+  }
+
+  files[clean+"/.folder"]="";
+  storeFiles();
+  renderFiles();
+  setStatus("Folder created");
+}
 function saveFile(){
   if(!selectedFile)return;
 
