@@ -120,7 +120,14 @@ function init(){
   document.getElementById("projectTitle").textContent=project.name;
   document.getElementById("projectDescription").textContent=project.description||"";
   const all=getAllFiles();
-  files=all[projectId]||{};
+  if(all[projectId]){
+  files=all[projectId];
+}else if(Object.values(all).some(v=>typeof v==="string")){
+  files=all;
+  storeFiles();
+}else{
+  files={};
+}
 
   if(Object.keys(files).length===0){
     files["README.md"]="# "+project.name+"\n\nCreated with App Factory.";
