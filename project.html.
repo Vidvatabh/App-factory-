@@ -167,12 +167,32 @@ function selectFile(name){
   setStatus("Opened "+name);
 }
 
-function renderFileSelection(){
-  document.querySelectorAll(".file").forEach(el=>{
-    el.classList.toggle("active",el.textContent==="📄 "+selectedFile);
-  });
-}
+function renderFiles(){
+  const list=document.getElementById("fileList");
+  list.innerHTML="";
 
+  Object.keys(files).sort().forEach(name=>{
+    if(name.endsWith("/.folder")){
+      const folder=name.replace("/.folder","");
+      const item=document.createElement("div");
+      item.className="file";
+      item.textContent="📁 "+folder;
+      list.appendChild(item);
+      return;
+    }
+
+    const item=document.createElement("div");
+    item.className="file"+(name===selectedFile?" active":"");
+    item.textContent="📄 "+name;
+    item.onclick=()=>selectFile(name);
+    list.appendChild(item);
+  });
+
+  if(!selectedFile && Object.keys(files).length){
+    const firstFile=Object.keys(files).find(name=>!name.endsWith("/.folder"));
+    if(firstFile) selectFile(firstFile);
+  }
+}
 function addFile(){
   const name=prompt("Enter file name (example: MainActivity.java)");
   if(!name)return;
