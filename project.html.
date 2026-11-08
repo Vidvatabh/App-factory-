@@ -61,6 +61,7 @@ input,textarea{background:#191e29;color:white;border:1px solid #394253;border-ra
           <div class="muted">Code Editor</div>
         </div>
         <button onclick="saveFile()">Save File</button>
+<button class="secondary" onclick="location.href='history.html?id='+projectId+'&file='+encodeURIComponent(selectedFile||'')">History</button>
       </div>
       <textarea id="editor" spellcheck="false"
         placeholder="Select a file or create a new one..."></textarea>
@@ -95,7 +96,9 @@ function getAllFiles(){
 }
 
 function storeFiles(){
-  localStorage.setItem(FILES_KEY,JSON.stringify(files));
+  const all=getAllFiles();
+  all[projectId]=files;
+  localStorage.setItem(FILES_KEY,JSON.stringify(all));
 }
 
 function escapeHTML(value){
