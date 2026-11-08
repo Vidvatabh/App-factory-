@@ -1,0 +1,230 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Project Workspace | App Factory</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#10131b;color:#f3f4f8;font-family:Arial,sans-serif}
+header{padding:16px;background:#191e29;border-bottom:1px solid #303746}
+.brand{color:#d9a85b;font-weight:800;font-size:20px}
+main{padding:18px;max-width:1100px;margin:auto}
+.muted{color:#929bad;font-size:13px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+button{border:0;border-radius:7px;padding:10px 14px;background:#c18d43;color:#171717;font-weight:bold;cursor:pointer}
+input,textarea{background:#191e29;color:white;border:1px solid #394253;border-radius:7px;padding:11px;width:100%;font:14px Arial}
+.layout{display:grid;grid-template-columns:220px 1fr;gap:14px;margin-top:18px}
+.panel{background:#191e29;border:1px solid #303746;border-radius:10px;padding:13px;min-width:0}
+.panel h3{font-size:14px;margin:3px 0 12px}
+.file{padding:10px;border-radius:6px;cursor:pointer;font-size:13px;overflow-wrap:anywhere}
+.file.active,.file:hover{background:#303746}
+.editor-head{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+#editor{height:55vh;min-height:300px;resize:vertical;font-family:monospace;line-height:1.5;tab-size:2}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.secondary{background:#303746;color:white}
+.danger{background:#793341;color:white}
+#status{margin-top:10px;color:#9acb9a;font-size:12px}
+@media(max-width:650px){.layout{grid-template-columns:1fr}#editor{height:48vh}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">⚙ APP FACTORY</div>
+  <div class="muted">Project Workspace</div>
+</header>
+
+<main>
+  <div class="top">
+    <div>
+      <div class="muted">WORKSPACE / PROJECT</div>
+      <h2 id="projectTitle">Loading project...</h2>
+      <div class="muted" id="projectDescription"></div>
+    </div>
+    <button onclick="location.href='index.html'">← Dashboard</button>
+  </div>
+
+  <div class="layout">
+    <section class="panel">
+      <h3>PROJECT FILES</h3>
+      <div id="fileList"></div>
+      <div class="actions">
+        <button onclick="addFile()">+ New File</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="editor-head">
+        <div>
+          <strong id="fileTitle">Select a file</strong>
+          <div class="muted">Code Editor</div>
+        </div>
+        <button onclick="saveFile()">Save File</button>
+      </div>
+      <textarea id="editor" spellcheck="false"
+        placeholder="Select a file or create a new one..."></textarea>
+      <div class="actions">
+        <button onclick="saveFile()">Save Changes</button>
+        <button class="secondary" onclick="renameFile()">Rename</button>
+        <button class="danger" onclick="deleteFile()">Delete File</button>
+      </div>
+      <div id="status">Ready</div>
+    </section>
+  </div>
+</main>
+
+<script>
+const PROJECTS_KEY="app_factory_projects";
+const FILES_KEY="app_factory_files";
+const params=new URLSearchParams(location.search);
+const projectId=Number(params.get("id"));
+
+let project=null;
+let files={};
+let selectedFile=null;
+
+function getProjects(){
+  try{return JSON.parse(localStorage.getItem(PROJECTS_KEY))||[]}
+  catch(e){return []}
+}
+
+function getAllFiles(){
+  try{return JSON.parse(localStorage.getItem(FILES_KEY))||{}}
+  catch(e){return {}}
+}
+
+function storeFiles(){
+  localStorage.setItem(FILES_KEY,JSON.stringify(files));
+}
+
+function escapeHTML(value){
+  return String(value).replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",
+    '"':"&quot;","'":"&#39;"
+  })[c]);
+}
+
+function init(){
+  project=getProjects().find(p=>p.id===projectId);
+
+  if(!project){
+    document.getElementById("projectTitle").textContent="Project not found";
+    document.getElementById("editor").disabled=true;
+    return;
+  }
+
+  document.getElementById("projectTitle").textContent=project.name;
+  document.getElementById("projectDescription").textContent=project.description||"";
+  const all=getAllFiles();
+  files=all[projectId]||{};
+
+  if(Object.keys(files).length===0){
+    files["README.md"]="# "+project.name+"\n\nCreated with App Factory.";
+    storeFiles();
+  }
+
+  renderFiles();
+}
+
+function renderFiles(){
+  const list=document.getElementById("fileList");
+  list.innerHTML="";
+
+  Object.keys(files).sort().forEach(name=>{
+    const item=document.createElement("div");
+    item.className="file"+(name===selectedFile?" active":"");
+    item.textContent="📄 "+name;
+    item.onclick=()=>selectFile(name);
+    list.appendChild(item);
+  });
+
+  if(!selectedFile && Object.keys(files).length){
+    selectFile(Object.keys(files)[0]);
+  }
+}
+
+function selectFile(name){
+  if(selectedFile && files[selectedFile]!==undefined){
+    files[selectedFile]=document.getElementById("editor").value;
+  }
+
+  selectedFile=name;
+  document.getElementById("fileTitle").textContent=name;
+  document.getElementById("editor").value=files[name]||"";
+  renderFileSelection();
+  setStatus("Opened "+name);
+}
+
+function renderFileSelection(){
+  document.querySelectorAll(".file").forEach(el=>{
+    el.classList.toggle("active",el.textContent==="📄 "+selectedFile);
+  });
+}
+
+function addFile(){
+  const name=prompt("Enter file name (example: MainActivity.java)");
+  if(!name)return;
+  const clean=name.trim();
+
+  if(!clean || clean.includes("/") || clean.includes("\\") || files[clean]!==undefined){
+    alert("Invalid or existing file name.");
+    return;
+  }
+
+  files[clean]="";
+  storeFiles();
+  renderFiles();
+  selectFile(clean);
+  setStatus("New file created");
+}
+
+function saveFile(){
+  if(!selectedFile)return;
+  files[selectedFile]=document.getElementById("editor").value;
+  storeFiles();
+  setStatus("Saved successfully");
+}
+
+function renameFile(){
+  if(!selectedFile)return;
+  const name=prompt("New file name",selectedFile);
+  if(!name)return;
+  const clean=name.trim();
+
+  if(!clean || clean.includes("/") || clean.includes("\\") ||
+     (clean!==selectedFile && files[clean]!==undefined)){
+    alert("Invalid or existing file name.");
+    return;
+  }
+
+  files[clean]=document.getElementById("editor").value;
+  delete files[selectedFile];
+  selectedFile=clean;
+  storeFiles();
+  renderFiles();
+  selectFile(clean);
+  setStatus("File renamed");
+}
+
+function deleteFile(){
+  if(!selectedFile)return;
+  if(!confirm("Delete "+selectedFile+"?"))return;
+
+  delete files[selectedFile];
+  selectedFile=null;
+  storeFiles();
+  document.getElementById("editor").value="";
+  document.getElementById("fileTitle").textContent="Select a file";
+  renderFiles();
+  setStatus("File deleted");
+}
+
+function setStatus(message){
+  document.getElementById("status").textContent=message;
+}
+
+init();
+</script>
+</body>
+</html>
