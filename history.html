@@ -89,6 +89,7 @@ function restoreVersion(index){
  }
 
  const versions=history[key]||[];
+const selectedVersion=versions[index];
  const files=all[projectId]||{};
  const current=files[file];
 
@@ -101,7 +102,7 @@ function restoreVersion(index){
   });
  }
 
- files[file]=versions[index].content;
+ files[file]=selectedVersion.content;
  all[projectId]=files;
  history[key]=versions;
 
