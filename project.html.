@@ -159,33 +159,49 @@ if(currentFolder){
   back.className="file";
   back.textContent="⬅ Back";
   back.onclick=()=>{
-    currentFolder="";
-    renderFiles();
+    currentFolder=currentFolder.includes("/")
+  ? currentFolder.substring(0,currentFolder.lastIndexOf("/"))
+  : "";
+
+renderFiles();
   };
   list.appendChild(back);
 }
-  Object.keys(files).sort().forEach(name=>{
-    if(name.endsWith("/.folder")){
-      const folder=name.replace("/.folder","");
-      const item=document.createElement("div");
-      item.className="file";
-      item.textContent="📁 "+folder;
+  const prefix=currentFolder ? currentFolder+"/" : "";
 
-item.onclick=()=>{
-  currentFolder=folder;
-  renderFiles();
-};
+Object.keys(files).sort().forEach(name=>{
 
-list.appendChild(item);
-return;
-    }
+  if(name.endsWith("/.folder")){
+    const folder=name.replace(/\/\.folder$/,"");
+    const parent=folder.includes("/") ? folder.substring(0,folder.lastIndexOf("/")) : "";
 
+    if(parent!==currentFolder)return;
+
+    const folderName=folder.split("/").pop();
     const item=document.createElement("div");
-    item.className="file"+(name===selectedFile?" active":"");
-    item.textContent="📄 "+name;
-    item.onclick=()=>selectFile(name);
+    item.className="file";
+    item.textContent="📁 "+folderName;
+
+    item.onclick=()=>{
+      currentFolder=folder;
+      renderFiles();
+    };
+
     list.appendChild(item);
-  });
+    return;
+  }
+
+  if(!name.startsWith(prefix))return;
+
+  const relative=name.substring(prefix.length);
+  if(relative.includes("/"))return;
+
+  const item=document.createElement("div");
+  item.className="file"+(name===selectedFile?" active":"");
+  item.textContent="📄 "+relative;
+  item.onclick=()=>selectFile(name);
+  list.appendChild(item);
+});
 
   if(!selectedFile && Object.keys(files).length){
     const firstFile=Object.keys(files).find(name=>!name.endsWith("/.folder"));
