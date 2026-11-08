@@ -207,8 +207,14 @@ Object.keys(files).sort().forEach(name=>{
 });
 
   if(!selectedFile && Object.keys(files).length){
-    const firstFile=Object.keys(files).find(name=>!name.endsWith("/.folder"));
-    if(firstFile) selectFile(firstFile);
+  const prefix = currentFolder ? currentFolder + "/" : "";
+  const firstFile = Object.keys(files).find(name =>
+    name.startsWith(prefix) &&
+    !name.endsWith("/.folder") &&
+    !name.slice(prefix.length).includes("/")
+  );
+
+  if(firstFile) selectFile(firstFile);
   }
 }
 function addFile(){
