@@ -139,8 +139,7 @@ function escapeHTML(value){
 }
 
 function openProject(id){
-  const p=getProjects().find(x=>x.id===id);
-  if(p)alert("Project: "+p.name+"\n\nProject workspace is our next development step.");
+  location.href="project.html?id="+id;
 }
 
 render();
