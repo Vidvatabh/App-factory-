@@ -66,7 +66,7 @@ input,textarea{background:#191e29;color:white;border:1px solid #394253;border-ra
       <textarea id="editor" spellcheck="false"
         placeholder="Select a file or create a new one..."></textarea>
       <div class="actions">
-        <button onclick="saveFile()">Save Changes</button>
+        <button onclick="saveChanges()">Save Changes</button>
         <button class="secondary" onclick="renameFile()">Rename</button>
         <button class="danger" onclick="deleteFile()">Delete File</button>
       </div>
@@ -294,6 +294,29 @@ function saveFile(){
   storeFiles();
   setStatus("Saved successfully");
 }
+  function saveChanges(){
+  if(selectedFile){
+    files[selectedFile]=document.getElementById("editor").value;
+  }
+
+  storeFiles();
+
+  const all=JSON.parse(localStorage.getItem(CHECKPOINTS_KEY)||"{}");
+
+  if(!all[projectId])all[projectId]=[];
+
+  all[projectId].unshift({
+    id:Date.now(),
+    date:new Date().toLocaleString(),
+    files:JSON.parse(JSON.stringify(files))
+  });
+
+  all[projectId]=all[projectId].slice(0,20);
+
+  localStorage.setItem(CHECKPOINTS_KEY,JSON.stringify(all));
+
+  setStatus("Project checkpoint saved");
+  }
 function renameFile(){
   if(!selectedFile)return;
 
