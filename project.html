@@ -43,6 +43,7 @@ input,textarea{background:#191e29;color:white;border:1px solid #394253;border-ra
     </div>
     <button onclick="location.href='index.html'">← Dashboard</button>
 <button class="secondary" onclick="location.href='checkpoints.html?id='+projectId">Checkpoints</button>
+<button class="secondary" onclick="exportBackup()">Export Backup</button>
   </div>
 
   <div class="layout">
@@ -366,7 +367,39 @@ function deleteFile(){
   renderFiles();
   setStatus("File deleted");
 }
+function exportBackup(){
+  if(selectedFile){
+    files[selectedFile]=document.getElementById("editor").value;
+  }
 
+  storeFiles();
+
+  const backup={
+    app:"App Factory",
+    version:1,
+    project:project,
+    exportedAt:new Date().toISOString(),
+    files:files
+  };
+
+  const blob=new Blob(
+    [JSON.stringify(backup,null,2)],
+    {type:"application/json"}
+  );
+
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement("a");
+
+  link.href=url;
+  link.download=(project.name||"project")
+    .replace(/[^a-z0-9_-]/gi,"_")+"_backup.json";
+
+  link.click();
+
+  URL.revokeObjectURL(url);
+
+  setStatus("Backup exported successfully");
+}
 function setStatus(message){
   document.getElementById("status").textContent=message;
 }
